@@ -1,5 +1,5 @@
 /*
-*** 2019 rewrited by @AlexBazowsky,
+2019 rewrited by @AlexBazowsky,
 .--------------------------------------------------------------------------.
 |    Software: Keyword counter                                             |
 |     Version: 0.75                                                        |
@@ -19,66 +19,14 @@
 | FITNESS FOR A PARTICULAR PURPOSE.                                        |
 '--------------------------------------------------------------------------'
 */
-/*
-    Changelog
-    0.75
-     - fix problem with live update non RAW images
-     - typo fixes
-    0.74
-     - change default sort key - off (fixes Issue #25)
-     - reload palette when keywords changed in KEYWORDS PALETTE (fixes Issue #17)
-    0.73
-     - fix error if selection no have metadata (fixes Issue #24)
-     - allow copy Title to Description and backward (fixes Issue #23)
-    0.72
-     - fix sync with empty title and/or descr (fixes Issue #18)
-    0.71
-     - regexp in split for words count
-     - remove duplicate spaces
-     - trim title and descr
-    0.7
-     - change template `w:0/c:0` to `words: 0 | chars: 0` (fix issue #12)
-     - add checkbox `add keywors` -- add functionality append exist keywords (fix issue #16)
-     - add live counting words and chars (fix issue #13)
-    0.66
-     - count chars end words for title and descr (fix issue #9)
-    0.65
-     - change to dynamic layout
-     - show count words in title and descr
-    0.61
-     - add checkbox for sort/unsort keywords
-     - add unique keywords function
-     - fix "for" statements for array
-    0.6
-     - add copy-paste
-     - remember checkboxes
-     - fix bug with empty metadata
-    0.5
-     - add sync metadata
-    0.4
-     - add show filename
-     - add save metadata
-     - add todo sections
-    0.3:
-     - add Title view
-     - add Descrition view
-     - rewrite code with refs
-    0.2:
-     - move from navbars to KeywordPalette
-     - create new Tab Panel -- KeywordPallete
-     - start changelog
-    0.1:
-     - initial version
-*/
 
-﻿function KeywordCounter() {
+function KeywordCounter() {
   this.requiredContext = "\tAdobe Bridge CS4 must be running.\n\tExecute against Bridge CS4 as the Target.\n";
   this.version = "0.75";
   this.author = "Tyzhenenko Dmitry";
   this.contributor = "AlexBazowsky @2019";
   $.level = 0; // Normal operation
   //$.level = 1; // Debugging level
-
 }
 
 KeywordCounter.prototype.run = function() {
@@ -238,23 +186,23 @@ KeywordCounter.prototype.run = function() {
     }
   }
 
-  function syncMetadata(masterThumb, listThumbs, params){
-        if (params.title == null) params.title = true;
-        if (params.descr == null) params.descr = true;
-        if (params.keywords == null) params.keywords = true;
-        if (params.sort == null) params.sort = true;
-        if (params.append == null) params.append = true;
-        md = masterThumb.synchronousMetadata;
-        md.namespace =  "http://purl.org/dc/elements/1.1/";
-        master_title = master_descr = master_keywords = null;
-        if (params.title == true) master_title = md.title[0] ? md.title[0] : "";
-        if (params.descr == true) master_descr = md.description[0] ? md.description[0] : "";
-        if (params.keywords == true) master_keywords = md.subject ? md.subject : [];
-        for ( var k  =0 ; k < listThumbs.length; k++)
-        {
-                saveMetadata(listThumbs[k], master_title, master_descr, master_keywords, { sort:params.sort, append:params.append} );
-        }
+  function syncMetadata(masterThumb, listThumbs, params) {
+    if (params.title == null) params.title = true;
+    if (params.descr == null) params.descr = true;
+    if (params.keywords == null) params.keywords = true;
+    if (params.sort == null) params.sort = true;
+    if (params.append == null) params.append = true;
+    md = masterThumb.synchronousMetadata;
+    md.namespace =  "http://purl.org/dc/elements/1.1/";
+    master_title = master_descr = master_keywords = null;
+    if (params.title == true) master_title = md.title[0] ? md.title[0] : "";
+    if (params.descr == true) master_descr = md.description[0] ? md.description[0] : "";
+    if (params.keywords == true) master_keywords = md.subject ? md.subject : [];
+    for ( var k  =0 ; k < listThumbs.length; k++)
+    {
+      saveMetadata(listThumbs[k], master_title, master_descr, master_keywords, { sort:params.sort, append:params.append} );
     }
+  }
 
   function copyClipboardMetadata(thumb) {
     wrapper.clipboardMaster.length = 0;
@@ -393,186 +341,184 @@ KeywordCounter.prototype.run = function() {
     keywordPalette.content.layout.resize();
   }
 
-    function addSyncPanel( bar) {
-        var staticFile = bar.add( "edittext", undefined, '--',{readonly:true,multiline:true,scrolling: false});
-        wrapper.fieldFilenameRefs.push(staticFile);
-        staticFile.alignment = ["fill", "top"];
-        //app.execMenuItem("Copy");
-        var grpFileSizes = bar.add("group");
-        grpFileSizes.orientation = "row";
-        var staticFile_size = grpFileSizes.add( "statictext", undefined, '--');
-        wrapper.fieldFilenameRefs.push(staticFile_size);
-        staticFile_size.minimumSize = [200,15];
-        var staticFile_dimension = grpFileSizes.add( "statictext", undefined, '--');
-        wrapper.fieldFilenameRefs.push(staticFile_dimension);
-        staticFile_dimension.minimumSize = [150,15];
-// ADD TITLE
-        var TitlePanel = bar.add( "panel", undefined, 'Title', );
-        wrapper.panelTitle.push(TitlePanel);
-        TitlePanel.maximumSize = [600,48];
-        TitlePanel.minimumSize = [355,48];
-        TitlePanel.orientation= "row";
-        TitlePanel.alignment = ["fill", "top"];
-        var editTitleField = TitlePanel.add( "edittext", undefined,"");
-        wrapper.editTitleRefs.push(editTitleField);
-        editTitleField.alignment = ["fill", "top"];
-        editTitleField.onChanging = function(e)
-        {
-            changeTotalTitle( wrapper.editTitleRefs[0].text.length>0 ? "words: "+ ((wrapper.editTitleRefs[0].text.trim().split(/\s+/)).length) +" | chars: "+ wrapper.editTitleRefs[0].text.length : "words: 0 | chars: 0" );
-        }
-        var chkSyncTitle = TitlePanel.add( "checkbox", undefined,"");
-        wrapper.chkSyncBox.push(chkSyncTitle);
-        chkSyncTitle.alignment = ["right", "top"];
-        chkSyncTitle.enabled = false;
-// END TITLE
+  function addSyncPanel(bar) {
+    var staticFile = bar.add( "edittext", undefined, '--',{readonly:true,multiline:true,scrolling: false});
+    wrapper.fieldFilenameRefs.push(staticFile);
+    staticFile.alignment = ["fill", "top"];
+    //app.execMenuItem("Copy");
+    var grpFileSizes = bar.add("group");
+    grpFileSizes.orientation = "row";
+    var staticFile_size = grpFileSizes.add( "statictext", undefined, '--');
+    wrapper.fieldFilenameRefs.push(staticFile_size);
+    staticFile_size.minimumSize = [200,15];
+    var staticFile_dimension = grpFileSizes.add( "statictext", undefined, '--');
+    wrapper.fieldFilenameRefs.push(staticFile_dimension);
+    staticFile_dimension.minimumSize = [150,15];
 
-//ADD DESCR
-        var DescrPanel = bar.add( "panel", undefined, 'Description');
-        wrapper.panelDesc.push(DescrPanel);
-        DescrPanel.maximumSize = [600,80];
-        DescrPanel.minimumSize = [355,80];
-        DescrPanel.orientation= "row";
-        DescrPanel.alignment = ["fill", "fill" ];
-        var editDescrField = DescrPanel.add( "edittext", undefined,"",  {multiline:true});
-        wrapper.editDescrRefs.push(editDescrField);
-        editDescrField.alignment = ["fill", "fill"];
-        editDescrField.onChanging = function()
-        {
-            changeTotalDescr( wrapper.editDescrRefs[0].text.length > 0 ? "words: "+ ((wrapper.editDescrRefs[0].text.trim().split(/\s+/)).length) +" | chars: "+wrapper.editDescrRefs[0].text.length : "words: 0 | chars: 0" );
-        }
-        var chkSyncDescr = DescrPanel.add( "checkbox", undefined,"");
-        wrapper.chkSyncBox.push(chkSyncDescr);
-        chkSyncDescr.alignment = ["right", "top"];
-        chkSyncDescr.enabled = false;
-//END DESCR
+    // ADD TITLE
+    var TitlePanel = bar.add( "panel", undefined, 'Title', );
+    wrapper.panelTitle.push(TitlePanel);
+    TitlePanel.maximumSize = [600,48];
+    TitlePanel.minimumSize = [355,48];
+    TitlePanel.orientation= "row";
+    TitlePanel.alignment = ["fill", "top"];
+    var editTitleField = TitlePanel.add( "edittext", undefined,"");
+    wrapper.editTitleRefs.push(editTitleField);
+    editTitleField.alignment = ["fill", "top"];
+    editTitleField.onChanging = function(e)
+    {
+      changeTotalTitle(wrapper.editTitleRefs[0].text.length>0 ? "words: "+ ((wrapper.editTitleRefs[0].text.trim().split(/\s+/)).length) +" | chars: "+ wrapper.editTitleRefs[0].text.length : "words: 0 | chars: 0" );
+    }
+    var chkSyncTitle = TitlePanel.add( "checkbox", undefined,"");
+    wrapper.chkSyncBox.push(chkSyncTitle);
+    chkSyncTitle.alignment = ["right", "top"];
+    chkSyncTitle.enabled = false;
+    // END TITLE
 
-//ADD KEYWORD
-        var KeywordsPanel = bar.add( "panel", undefined, 'Keywords');
-        wrapper.panelKeywords.push(KeywordsPanel);
-        KeywordsPanel.maximumSize = [600,250];
-        KeywordsPanel.minimumSize = [355,150];
-        KeywordsPanel.orientation = "row";
-        KeywordsPanel.alignment = ["fill", "fill"];
-        var editKeywordsField = KeywordsPanel.add( "edittext", undefined,"",  {multiline:true});
-        wrapper.editKeywordsRefs.push(editKeywordsField);
-        editKeywordsField.alignment = ["fill", "fill"];
-        editKeywordsField.onChanging = function()
-        {
-            changeTotal( wrapper.editKeywordsRefs[0].text.length> 0 ? wrapper.editKeywordsRefs[0].text.split(",").length  : "0" );
-        }
-        var chkSyncKeywords = KeywordsPanel.add( "checkbox", undefined,"");
-        wrapper.chkSyncBox.push(chkSyncKeywords);
-        chkSyncKeywords.alignment = ["right", "top"];
-        chkSyncKeywords.enabled = false;
-//END KEYWORD
+    //ADD DESCR
+    var DescrPanel = bar.add( "panel", undefined, 'Description');
+    wrapper.panelDesc.push(DescrPanel);
+    DescrPanel.maximumSize = [600,80];
+    DescrPanel.minimumSize = [355,80];
+    DescrPanel.orientation= "row";
+    DescrPanel.alignment = ["fill", "fill" ];
+    var editDescrField = DescrPanel.add( "edittext", undefined,"",  {multiline:true});
+    wrapper.editDescrRefs.push(editDescrField);
+    editDescrField.alignment = ["fill", "fill"];
+    editDescrField.onChanging = function()
+    {
+      changeTotalDescr( wrapper.editDescrRefs[0].text.length > 0 ? "words: "+ ((wrapper.editDescrRefs[0].text.trim().split(/\s+/)).length) +" | chars: "+wrapper.editDescrRefs[0].text.length : "words: 0 | chars: 0" );
+    }
+    var chkSyncDescr = DescrPanel.add( "checkbox", undefined,"");
+    wrapper.chkSyncBox.push(chkSyncDescr);
+    chkSyncDescr.alignment = ["right", "top"];
+    chkSyncDescr.enabled = false;
+    //END DESCR
 
-        var grpRow1 = bar.add("group");
-        grpRow1.orientation = "row";
-        grpRow1.alignment = ["fill", "fill"];
-        grpRow1.maximumSize = [600,30];
-        grpRow1.minimumSize = [355,30];
-        btnSave = grpRow1.add("button", undefined, "Save");
-        wrapper.fieldFilenameRefs.push(btnSave);
-        btnSync = grpRow1.add("button", undefined, "Sync");
-        wrapper.fieldFilenameRefs.push(btnSync);
-        var chkAddKeywords = grpRow1.add( "checkbox", undefined,"Add on sync");
-        wrapper.chkAddBox.push(chkAddKeywords);
-        chkAddKeywords.enabled = true;
-        chkAddKeywords.value= false;
-        var grpRow2 = bar.add("group");
-        grpRow2.orientation = "row";
-        grpRow2.alignment = ["fill", "fill"];
-        grpRow2.maximumSize = [600,30];
-        grpRow2.minimumSize = [355,30];
-        btnCopy = grpRow2.add("button", undefined, "Copy");
-        wrapper.fieldFilenameRefs.push(btnCopy);
-        btnPaste = grpRow2.add("button", undefined, "Paste");
-        wrapper.fieldFilenameRefs.push(btnPaste);
-        btnPaste.enabled=false;
-        btnSave.enabled=false;
-        btnCopy .enabled=false;
-        btnSync.enabled=false;
-        var chkSortKeywords = grpRow2.add( "checkbox", undefined,"Sort keywords");
-        wrapper.chkSortBox.push(chkSortKeywords);
-        chkSortKeywords.enabled = true;
-        chkSortKeywords.value= false;
-        btnSave.minimumSize = [110,25];
-        btnSync.minimumSize = [110,25];
-        btnCopy.minimumSize = [110,25];
-        btnPaste.minimumSize = [110,25];
-        btnSave.maximumSize = [110,25];
-        btnSync.maximumSize = [110,25];
-        btnCopy.maximumSize = [110,25];
-        btnPaste.maximumSize = [110,25];
+    //ADD KEYWORD
+    var KeywordsPanel = bar.add( "panel", undefined, 'Keywords');
+    wrapper.panelKeywords.push(KeywordsPanel);
+    KeywordsPanel.maximumSize = [600,250];
+    KeywordsPanel.minimumSize = [355,150];
+    KeywordsPanel.orientation = "row";
+    KeywordsPanel.alignment = ["fill", "fill"];
+    var editKeywordsField = KeywordsPanel.add( "edittext", undefined,"",  {multiline:true});
+    wrapper.editKeywordsRefs.push(editKeywordsField);
+    editKeywordsField.alignment = ["fill", "fill"];
+    editKeywordsField.onChanging = function()
+    {
+      changeTotal( wrapper.editKeywordsRefs[0].text.length> 0 ? wrapper.editKeywordsRefs[0].text.split(",").length  : "0" );
+    }
+    var chkSyncKeywords = KeywordsPanel.add( "checkbox", undefined,"");
+    wrapper.chkSyncBox.push(chkSyncKeywords);
+    chkSyncKeywords.alignment = ["right", "top"];
+    chkSyncKeywords.enabled = false;
+    //END KEYWORD
 
-        btnSave.onClick = function()
-        {
-            if ( app.document.selections.length == 1 )
-            {
-                editTitle = wrapper.editTitleRefs[0];
-                new_title = editTitle.text;
-                editDescr = wrapper.editDescrRefs[0];
-                new_descr = editDescr.text;
-                editKeywords =  wrapper.editKeywordsRefs[0];
-                new_keywords = editKeywords.text.split(",");
-                for (var k  =0 ; k < new_keywords.length; k++)
-                {
-                        new_keywords[k] = new_keywords[k].trim();
-                }
-                saveMetadata(app.document.selections[0],
-                                    new_title,
-                                    new_descr,
-                                    new_keywords,
-                                    { sort:wrapper.chkSortBox[0].value,
-                                    append:false } );
-                reselectFiles();
-            }
-            else
-            {
-                alert("Metadata save only for one file", "Error", errorIcon)
-            }
-        }
-        btnSync.onClick = function()
-        {
-            if (!wrapper.chkSyncBox[0].value && !wrapper.chkSyncBox[1].value && !wrapper.chkSyncBox[2].value)
-                alert("Please select checkbox");
-            else
-            {
-                syncMetadata(wrapper.masterThumb[0], app.document.selections,
-                        { title:wrapper.chkSyncBox[0].value,
-                            descr:wrapper.chkSyncBox[1].value,
-                            keywords:wrapper.chkSyncBox[2].value,
-                            sort:wrapper.chkSortBox[0].value,
-                            append:wrapper.chkAddBox[0].value
-                            })
-                reselectFiles();
-            }
-        }
-        btnCopy.onClick = function()
-        {
-            if (!wrapper.chkSyncBox[0].value && !wrapper.chkSyncBox[1].value && !wrapper.chkSyncBox[2].value)
-                alert("Please select checkbox");
-            else
-            {
-                copyClipboardMetadata(app.document.selections[0]);
-                wrapper.flags.clipEmpty = false;
-            }
-        }
+    var grpRow1 = bar.add("group");
+    grpRow1.orientation = "row";
+    grpRow1.alignment = ["fill", "fill"];
+    grpRow1.maximumSize = [600,30];
+    grpRow1.minimumSize = [355,30];
+    btnSave = grpRow1.add("button", undefined, "Save");
+    wrapper.fieldFilenameRefs.push(btnSave);
+    btnSync = grpRow1.add("button", undefined, "Sync");
+    wrapper.fieldFilenameRefs.push(btnSync);
+    var chkAddKeywords = grpRow1.add( "checkbox", undefined,"Add on sync");
+    wrapper.chkAddBox.push(chkAddKeywords);
+    chkAddKeywords.enabled = true;
+    chkAddKeywords.value= false;
+    var grpRow2 = bar.add("group");
+    grpRow2.orientation = "row";
+    grpRow2.alignment = ["fill", "fill"];
+    grpRow2.maximumSize = [600,30];
+    grpRow2.minimumSize = [355,30];
+    btnCopy = grpRow2.add("button", undefined, "Copy");
+    wrapper.fieldFilenameRefs.push(btnCopy);
+    btnPaste = grpRow2.add("button", undefined, "Paste");
+    wrapper.fieldFilenameRefs.push(btnPaste);
+    btnPaste.enabled=false;
+    btnSave.enabled=false;
+    btnCopy .enabled=false;
+    btnSync.enabled=false;
+    var chkSortKeywords = grpRow2.add( "checkbox", undefined,"Sort keywords");
+    wrapper.chkSortBox.push(chkSortKeywords);
+    chkSortKeywords.enabled = true;
+    chkSortKeywords.value= false;
+    btnSave.minimumSize = [110,25];
+    btnSync.minimumSize = [110,25];
+    btnCopy.minimumSize = [110,25];
+    btnPaste.minimumSize = [110,25];
+    btnSave.maximumSize = [110,25];
+    btnSync.maximumSize = [110,25];
+    btnCopy.maximumSize = [110,25];
+    btnPaste.maximumSize = [110,25];
 
-        btnPaste.onClick = function()
+    btnSave.onClick = function() {
+      if ( app.document.selections.length == 1 ) {
+        editTitle = wrapper.editTitleRefs[0];
+        new_title = editTitle.text;
+        editDescr = wrapper.editDescrRefs[0];
+        new_descr = editDescr.text;
+        editKeywords =  wrapper.editKeywordsRefs[0];
+        new_keywords = editKeywords.text.split(",");
+        for (var k  =0 ; k < new_keywords.length; k++)
         {
-            if (!wrapper.chkSyncBox[0].value && !wrapper.chkSyncBox[1].value && !wrapper.chkSyncBox[2].value)
-                alert("Please select checkbox");
-            else
-            {
-                pasteClipboardMetadata( app.document.selections);
-                reselectFiles();
-            }
-
+          new_keywords[k] = new_keywords[k].trim();
         }
-
+        saveMetadata(
+          app.document.selections[0],
+          new_title,
+          new_descr,
+          new_keywords,
+          {
+            sort:wrapper.chkSortBox[0].value,
+            append:false
+          }
+        );
+        reselectFiles();
+      } else {
+        alert("Metadata save only for one file", "Error", errorIcon)
+      }
     }
 
+    btnSync.onClick = function() {
+      if (!wrapper.chkSyncBox[0].value && !wrapper.chkSyncBox[1].value && !wrapper.chkSyncBox[2].value)
+        alert("Please select checkbox");
+      else {
+        syncMetadata(
+          wrapper.masterThumb[0],
+          app.document.selections,
+          {
+            title:wrapper.chkSyncBox[0].value,
+            descr:wrapper.chkSyncBox[1].value,
+            keywords:wrapper.chkSyncBox[2].value,
+            sort:wrapper.chkSortBox[0].value,
+            append:wrapper.chkAddBox[0].value
+          }
+        );
+        reselectFiles();
+      }
+    }
+
+    btnCopy.onClick = function() {
+      if (!wrapper.chkSyncBox[0].value && !wrapper.chkSyncBox[1].value && !wrapper.chkSyncBox[2].value)
+        alert("Please select checkbox");
+      else {
+        copyClipboardMetadata(app.document.selections[0]);
+        wrapper.flags.clipEmpty = false;
+      }
+    }
+
+    btnPaste.onClick = function() {
+      if (!wrapper.chkSyncBox[0].value && !wrapper.chkSyncBox[1].value && !wrapper.chkSyncBox[2].value)
+        alert("Please select checkbox");
+      else {
+        pasteClipboardMetadata( app.document.selections);
+        reselectFiles();
+      }
+    }
+  }
 
   onDocCreate = function( evt ) {
     if( evt.object.constructor.name == "Document" ) {
